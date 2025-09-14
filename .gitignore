@@ -1,0 +1,9 @@
+# Qt build files 
+build-* 
+*.user 
+*.user.* 
+*.autosave 
+Makefile* 
+*.Debug 
+*.Release 
+build/ 
