@@ -1,7 +1,6 @@
 #include "mainwindow.h"
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QMessageBox>
+#include "Parcelbox.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -15,11 +14,25 @@ MainWindow::MainWindow(QWidget *parent)
     connect(searchButton, &QPushButton::clicked, this, &MainWindow::searchAddress);
     connect(clearButton, &QPushButton::clicked, this, &MainWindow::clearResults);
     connect(addressInput, &QLineEdit::returnPressed, this, &MainWindow::searchAddress);
-    connect(parcelboxButton, &QPushButton::clicked, this, &MainWindow::searchAddress);
+    connect(parcelboxButton, &QPushButton::clicked, this, &MainWindow::openParcelboxWindow);
+    parcelboxWindow = nullptr;
 }
 
 MainWindow::~MainWindow()
 {
+    if (parcelboxWindow) {
+        delete parcelboxWindow;
+    }
+}
+
+void MainWindow::openParcelboxWindow()
+{
+    if (!parcelboxWindow) {
+        parcelboxWindow = new Parcelbox(this);
+    }
+    parcelboxWindow->show();
+    parcelboxWindow->raise();
+    parcelboxWindow->activateWindow();
 }
 
 void MainWindow::setupUI()
@@ -27,7 +40,7 @@ void MainWindow::setupUI()
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
 
-    // Стилиы
+    // Стили
     setStyleSheet(
         "QMainWindow { background-color: #f5f5f5; }"
         "QLineEdit { "
@@ -38,7 +51,7 @@ void MainWindow::setupUI()
         "background-color: white; "
         "color: black; "
         "}"
-        "QLineEdit:focus { border-color: #4CAF50; }"
+        "QLineEdit:focus { border-color: #004b93; }"
         "QPushButton { "
         "padding: 10px 5px; "
         "border: none; "
@@ -48,12 +61,12 @@ void MainWindow::setupUI()
         "color: white; "
         "margin: 10px; "
         "}"
-        "QPushButton#searchBtn { background-color: #4CAF50; }"
-        "QPushButton#searchBtn:hover { background-color: #45a049; }"
-        "QPushButton#clearBtn { background-color: #f44336; }"
-        "QPushButton#clearBtn:hover { background-color: #da190b; }"
+        "QPushButton#searchBtn { background-color: #004b93; }" // found adres btn
+        "QPushButton#searchBtn:hover { background-color: #3a6db4; }" // когда навели курсор
+        "QPushButton#clearBtn { background-color: #f44336; }" // очистить поле
+        "QPushButton#clearBtn:hover { background-color: #da190b; }"// когда навели курсор
         "QPushButton#parcelBtn { "
-        "background-color: #da7205; "
+        "background-color: #da7205; " // parcelobx цвет
         "padding: 10px 30px; "
         "min-width: 100px; "
         "}"
@@ -78,57 +91,42 @@ void MainWindow::setupUI()
         "}"
         );
 
-    QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
-    mainLayout->setSpacing(15);
-    mainLayout->setContentsMargins(30, 30, 30, 30);
-
-    // Заголовок
-    titleLabel = new QLabel("Driver Search System");
+    // Заголовок - позиция и размер
+    titleLabel = new QLabel("Driver Search System", centralWidget);
     titleLabel->setObjectName("title");
     titleLabel->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(titleLabel);
-
-    // Инструкция
-    instructionLabel = new QLabel("Enter street name to find responsible driver");
-    instructionLabel->setObjectName("instruction");
-    instructionLabel->setAlignment(Qt::AlignCenter);
-    mainLayout->addWidget(instructionLabel);
+    titleLabel->setGeometry(30, 30, 440, 40);
 
     // Поле ввода адреса
-    addressInput = new QLineEdit();
+    addressInput = new QLineEdit(centralWidget);
     addressInput->setPlaceholderText("Example: Machova, Majerova, Skupova");
-    mainLayout->addWidget(addressInput);
+    addressInput->setGeometry(30, 105, 440, 40);
 
-    // Кнопки
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-
-    searchButton = new QPushButton("Find Driver");
+    // Кнопки в ряд
+    searchButton = new QPushButton("Find Driver", centralWidget);
     searchButton->setObjectName("searchBtn");
     searchButton->setCursor(Qt::PointingHandCursor);
+    searchButton->setGeometry(30, 160, 130, 60);
 
-    clearButton = new QPushButton("Clear");
+    clearButton = new QPushButton("Clear", centralWidget);
     clearButton->setObjectName("clearBtn");
     clearButton->setCursor(Qt::PointingHandCursor);
+    clearButton->setGeometry(175, 160, 130, 60);
 
-    parcelboxButton = new QPushButton("Parcelbox Info");
+    parcelboxButton = new QPushButton("Parcelbox Info", centralWidget);
     parcelboxButton->setObjectName("parcelBtn");
     parcelboxButton->setCursor(Qt::PointingHandCursor);
-
-    buttonLayout->addWidget(searchButton);
-    buttonLayout->addWidget(clearButton);
-    buttonLayout->addWidget(parcelboxButton);
-    mainLayout->addLayout(buttonLayout);
+    parcelboxButton->setGeometry(320, 160, 150, 60);
 
     // Поле результатов
-    resultText = new QTextEdit();
+    resultText = new QTextEdit(centralWidget);
     resultText->setReadOnly(true);
     resultText->setPlaceholderText("Driver information will be displayed here...");
-    mainLayout->addWidget(resultText);
+    resultText->setGeometry(30, 215, 440, 155);
 }
 
 void MainWindow::initializeDriverData()
 {
-
     driverStreets[53455] = QStringList() << "emila skody" << "skupova" << "tylova";
     driverNames[53455] = "Tomasek";
 
@@ -150,26 +148,23 @@ void MainWindow::initializeDriverData()
 
 void MainWindow::searchAddress()
 {
-    QString address = addressInput->text().trimmed();  // убирает лишние пробелы по краям
+    QString address = addressInput->text().trimmed();
 
     if (address.isEmpty()) {
         QMessageBox::warning(this, "Error", "Please enter an address to search");
         return;
     }
 
-    // Приведение к нижнему регистру для поиска (только буквы и цифры (символы)
     QString searchAddress = address.toLower();
 
-    // Убираем все символы и оставляем только буквы, цифры и пробелы
     QString cleanAddress;
     for (QChar c : searchAddress) {
         if (c.isLetterOrNumber() || c.isSpace()) {
             cleanAddress += c;
         }
     }
-    cleanAddress = cleanAddress.simplified(); // убирает лишние пробелы
+    cleanAddress = cleanAddress.simplified();
 
-    // НОВОЕ: Сначала проверяем конкретные адреса
     if (specificAddresses.contains(cleanAddress)) {
         int specificDriverId = specificAddresses[cleanAddress];
         QString workHours = specificHours[cleanAddress];
@@ -183,12 +178,10 @@ void MainWindow::searchAddress()
                              .arg(workHours);
 
         resultText->setText(result);
-        resultText->setStyleSheet(resultText->styleSheet() + " color: #9f07e0;");  // фиолетовый фиол цвет для специальных адресов
+        resultText->setStyleSheet(resultText->styleSheet() + " color: #9f07e0;");
         return;
     }
 
-
-    // Поиск водителя
     int foundDriverId = -1;
     QString foundStreet;
 
@@ -197,7 +190,6 @@ void MainWindow::searchAddress()
         QStringList streets = it.value();
 
         for (const QString &street : streets) {
-            // Улучшенный поиск: ищем частичные совпадения в обе стороны
             if (cleanAddress.contains(street) || street.contains(cleanAddress)) {
                 foundDriverId = driverId;
                 foundStreet = street;
@@ -211,7 +203,6 @@ void MainWindow::searchAddress()
 
     QString result;
 
-    // Отображение результата
     if (foundDriverId != -1) {
         result = QString(
                      "Package will be delivered by driver ID: %1\n"
