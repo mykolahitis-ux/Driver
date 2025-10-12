@@ -25,7 +25,7 @@ Parcelbox::~Parcelbox()
 
 void Parcelbox::setupUI()
 {
-    centralWidget = new QWidget(this);
+    centralWidget = new QWidget(this); // this указывает, что этот новый QWidget принадлежит текущему объекту (Parcelbox)
     setCentralWidget(centralWidget);
 
     // Стили с синим цветом для Find Parcelbox
@@ -57,37 +57,13 @@ void Parcelbox::setupUI()
         "QPushButton#clearBtn:hover { background-color: #da190b; }"
         "QPushButton#backBtn { background-color: #9e9e9e; }"
         "QPushButton#backBtn:hover { background-color: #757575; }"
-        "QTextEdit { "
-        "border: 2px solid #ddd; "
-        "border-radius: 8px; "
-        "padding: 10px; "
-        "background-color: white; "
-        "font-size: 13px; "
-        "}"
-        "QLabel#title { "
-        "font-size: 20px; "
-        "font-weight: bold; "
-        "color: #333; "
-        "margin: 10px 0; "
-        "}"
-        "QLabel#instruction { "
-        "font-size: 12px; "
-        "color: #666; "
-        "margin: 5px 0 15px 0; "
-        "}"
-        "QLabel { "
-        "font-weight: bold; "
-        "font-size: 14px; "
-        "color: #444; "
-        "margin: 5px 0; "
-        "}"
         );
 
     // Заголовок
     titleLabel = new QLabel("Parcelbox Information System", centralWidget);
     titleLabel->setObjectName("title");
     titleLabel->setAlignment(Qt::AlignCenter);
-    titleLabel->setGeometry(30, 20, 540, 40);
+    titleLabel->setGeometry(30, 20, 540, 50);
 /*
     // Инструкция
     instructionLabel = new QLabel("Select parcelbox from list or search by address", centralWidget);

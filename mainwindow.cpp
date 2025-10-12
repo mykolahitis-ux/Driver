@@ -1,6 +1,10 @@
 #include "mainwindow.h"
 #include <QMessageBox>
 #include "Parcelbox.h"
+#include "streetsettings.h"
+#include <QDesktopServices>
+#include <QUrl>
+#include <QRegularExpression>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -8,20 +12,29 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     initializeDriverData();
     setWindowTitle("Driver Search by Address");
-    setFixedSize(500, 400);
+    setFixedSize(700, 650);
 
     // Подключение сигналов
     connect(searchButton, &QPushButton::clicked, this, &MainWindow::searchAddress);
     connect(clearButton, &QPushButton::clicked, this, &MainWindow::clearResults);
     connect(addressInput, &QLineEdit::returnPressed, this, &MainWindow::searchAddress);
     connect(parcelboxButton, &QPushButton::clicked, this, &MainWindow::openParcelboxWindow);
+    connect(mapsButton, &QPushButton::clicked, this, &MainWindow::openMaps);
+    connect(settingsButton, &QPushButton::clicked, this, &MainWindow::openSettingsWindow);
+    connect(searchInMapsButton, &QPushButton::clicked, this, &MainWindow::searchAddressInMaps);
+
+
     parcelboxWindow = nullptr;
+    settingsWindow = nullptr;
 }
 
 MainWindow::~MainWindow()
 {
     if (parcelboxWindow) {
         delete parcelboxWindow;
+    }
+    if (settingsWindow) {
+        delete settingsWindow;
     }
 }
 
@@ -33,6 +46,16 @@ void MainWindow::openParcelboxWindow()
     parcelboxWindow->show();
     parcelboxWindow->raise();
     parcelboxWindow->activateWindow();
+}
+
+void MainWindow::openSettingsWindow()
+{
+    if (!settingsWindow) {
+        settingsWindow = new StreetSettings(this);
+    }
+    settingsWindow->show();
+    settingsWindow->raise();
+    settingsWindow->activateWindow();
 }
 
 void MainWindow::setupUI()
@@ -61,16 +84,21 @@ void MainWindow::setupUI()
         "color: white; "
         "margin: 10px; "
         "}"
-        "QPushButton#searchBtn { background-color: #004b93; }" // found adres btn
-        "QPushButton#searchBtn:hover { background-color: #3a6db4; }" // когда навели курсор
-        "QPushButton#clearBtn { background-color: #f44336; }" // очистить поле
-        "QPushButton#clearBtn:hover { background-color: #da190b; }"// когда навели курсор
-        "QPushButton#parcelBtn { "
-        "background-color: #da7205; " // parcelobx цвет
-        "padding: 10px 30px; "
-        "min-width: 100px; "
-        "}"
+        "QPushButton#searchBtn { background-color: #004b93; }"
+        "QPushButton#searchBtn:hover { background-color: #3a6db4; }"
+
+        "QPushButton#clearBtn { background-color: #f44336; }"
+        "QPushButton#clearBtn:hover { background-color: #da190b; }"
+
+        "QPushButton#parcelBtn {background-color: #da7205; }"
         "QPushButton#parcelBtn:hover { background-color: #b56613; }"
+
+        "QPushButton#mapsBtn { background-color: #0078d7; }"
+        "QPushButton#mapsBtn:hover { background-color: #20B2AA; }"
+
+        "QPushButton#settingsBtn {background-color: #9C27B0; }"
+        "QPushButton#settingsBtn:hover { background-color: #7B1FA2; }"
+
         "QTextEdit { "
         "border: 2px solid #ddd; "
         "border-radius: 8px; "
@@ -78,55 +106,87 @@ void MainWindow::setupUI()
         "background-color: white; "
         "font-size: 13px; "
         "}"
+
+        "QPushButton#searchMapsBtn { "
+        "background-color: 	#FF69B4; "
+        "color: white; "
+        "font-weight: bold; "
+        "border-radius: 8px; "
+        "font-size: 14px; "
+        "} "
+        "QPushButton#searchMapsBtn:hover { background-color: #FF1493; }"
+        "QPushButton#settingsBtn { "
+        "background-color: #9C27B0; "
+        "color: white; "
+        "font-weight: bold; "
+        "border-radius: 8px; "
+        "font-size: 14px; "
+        "} "
+
+
         "QLabel#title { "
         "font-size: 20px; "
         "font-weight: bold; "
         "color: #333; "
         "margin: 10px 0; "
         "}"
-        "QLabel#instruction { "
-        "font-size: 12px; "
-        "color: #666; "
-        "margin: 5px 0 15px 0; "
-        "}"
         );
 
-    // Заголовок - позиция и размер
+    // Заголовок
     titleLabel = new QLabel("Driver Search System", centralWidget);
     titleLabel->setObjectName("title");
     titleLabel->setAlignment(Qt::AlignCenter);
-    titleLabel->setGeometry(30, 30, 440, 40);
+    titleLabel->setGeometry(50, 40, 600, 60);
 
     // Поле ввода адреса
     addressInput = new QLineEdit(centralWidget);
-    addressInput->setPlaceholderText("Example: Machova, Majerova, Skupova");
-    addressInput->setGeometry(30, 105, 440, 40);
+    addressInput->setPlaceholderText("Example: Machova 15, Podnikatelska 103");
+    addressInput->setGeometry(50, 130, 600, 50);
 
-    // Кнопки в ряд
+
     searchButton = new QPushButton("Find Driver", centralWidget);
     searchButton->setObjectName("searchBtn");
     searchButton->setCursor(Qt::PointingHandCursor);
-    searchButton->setGeometry(30, 160, 130, 60);
+    searchButton->setGeometry(50, 200, 170, 70);
 
     clearButton = new QPushButton("Clear", centralWidget);
     clearButton->setObjectName("clearBtn");
     clearButton->setCursor(Qt::PointingHandCursor);
-    clearButton->setGeometry(175, 160, 130, 60);
+    clearButton->setGeometry(240, 200, 170, 70);
 
     parcelboxButton = new QPushButton("Parcelbox Info", centralWidget);
     parcelboxButton->setObjectName("parcelBtn");
     parcelboxButton->setCursor(Qt::PointingHandCursor);
-    parcelboxButton->setGeometry(320, 160, 150, 60);
+    parcelboxButton->setGeometry(430, 200, 220, 70);
 
     // Поле результатов
     resultText = new QTextEdit(centralWidget);
     resultText->setReadOnly(true);
     resultText->setPlaceholderText("Driver information will be displayed here...");
-    resultText->setGeometry(30, 215, 440, 155);
+    resultText->setGeometry(50, 290, 600, 280);
+
+    // Кнопка Maps
+    mapsButton = new QPushButton("Maps", centralWidget);
+    mapsButton->setObjectName("mapsBtn");
+    mapsButton->setCursor(Qt::PointingHandCursor);
+    mapsButton->setGeometry(530, 20, 120, 60);
+
+    // Кнопка Settings
+    settingsButton = new QPushButton("⚙ Settings", centralWidget);
+    settingsButton->setObjectName("settingsBtn");
+    settingsButton->setCursor(Qt::PointingHandCursor);
+    settingsButton->setGeometry(50, 580, 600, 50);
+
+    //  - Поиск в Maps
+    searchInMapsButton = new QPushButton("Search in Maps", centralWidget);
+    searchInMapsButton->setObjectName("searchMapsBtn");
+    searchInMapsButton->setCursor(Qt::PointingHandCursor);
+    searchInMapsButton->setGeometry(20, 20, 140, 70);
 }
 
 void MainWindow::initializeDriverData()
 {
+
     driverStreets[53455] = QStringList() << "emila skody" << "skupova" << "tylova";
     driverNames[53455] = "Tomasek";
 
@@ -137,13 +197,44 @@ void MainWindow::initializeDriverData()
     driverNames[33047] = "Bochi";
 
     driverStreets[33051] = QStringList() << "hrbitovni" << "zabelska" << "cvokarska";
-    driverNames[33051] = "Debil";
+    driverNames[33051] = "Baha";
 
     specificAddresses["hrbitovni 64"] = 33047;
     specificHours["hrbitovni 64"] = "8:00 - 20:00";
 
     specificAddresses["podnikatelska 1"] = 33047;
     specificHours["podnikatelska 1"] = "10:00 - 13:00";
+}
+
+void MainWindow::openMaps()
+{
+    QUrl url("https://www.google.com/maps/search/+Kharkov+Kharkiv/?entry=wc&hl=ru");
+    QDesktopServices::openUrl(url);
+}
+
+void MainWindow::searchAddressInMaps()
+{
+    QString address = addressInput->text().trimmed();
+
+    if (address.isEmpty()) {
+        QMessageBox::warning(this, "Ошибка", "Введите адрес для поиска в картах");
+        return;
+    }
+
+    // Автоматически добавляем "Харьков" к адресу
+    QString searchQuery = address + ", Харьков";
+
+    // Кодируем адрес для URL (заменяем пробелы и спецсимволы)
+    QString encodedAddress = QUrl::toPercentEncoding(searchQuery);
+
+    // Формируем URL для Google Maps
+    QString mapsUrl = QString("https://www.google.com/maps/search/%1").arg(encodedAddress);
+
+    // Открываем в браузере
+    QDesktopServices::openUrl(QUrl(mapsUrl));
+
+
+   // QMessageBox::information(this, "Поиск в Maps", QString("Открываю Google Maps для адреса:\n%1").arg(searchQuery));
 }
 
 void MainWindow::searchAddress()
@@ -165,6 +256,31 @@ void MainWindow::searchAddress()
     }
     cleanAddress = cleanAddress.simplified();
 
+    // Сначала проверяем настройки диапазонов номеров домов
+    if (settingsWindow) {
+        QString driverName;
+        QString matchInfo;
+        int driverId = settingsWindow->findDriverByAddress(cleanAddress, driverName, matchInfo);
+
+        if (driverId != -1) {
+            QString result = QString(
+                                 "✓ FOUND BY HOUSE NUMBER RANGE\n"
+                                 "=====================================\n"
+                                 "Driver ID: %1\n"
+                                 "Driver Name: %2\n"
+                                 "Match Details: %3\n"
+                                 "=====================================\n"
+                                 ).arg(driverId)
+                                 .arg(driverName)
+                                 .arg(matchInfo);
+
+            resultText->setText(result);
+            resultText->setStyleSheet(resultText->styleSheet() + " color: #1976D2;");
+            return;
+        }
+    }
+
+    // Проверка специфических адресов
     if (specificAddresses.contains(cleanAddress)) {
         int specificDriverId = specificAddresses[cleanAddress];
         QString workHours = specificHours[cleanAddress];

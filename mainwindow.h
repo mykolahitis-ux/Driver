@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QWidget>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTextEdit>
@@ -9,11 +10,9 @@
 #include <QMap>
 #include <QStringList>
 
-QT_BEGIN_NAMESPACE
-QT_END_NAMESPACE
+class Parcelbox;
+class StreetSettings;
 
-
-class Parcelbox; // Предварительное объявление
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -25,7 +24,10 @@ public:
 private slots:
     void searchAddress();
     void clearResults();
-    void openParcelboxWindow(); // Новый слот
+    void openParcelboxWindow();
+    void openMaps();
+    void openSettingsWindow();
+    void searchAddressInMaps();  // НОВАЯ ФУНКЦИЯ
 
 private:
     void setupUI();
@@ -33,22 +35,25 @@ private:
 
     // UI элементы
     QWidget *centralWidget;
+    QLabel *titleLabel;
     QLineEdit *addressInput;
     QPushButton *searchButton;
     QPushButton *clearButton;
     QPushButton *parcelboxButton;
+    QPushButton *mapsButton;
+    QPushButton *searchInMapsButton;  // НОВАЯ КНОПКА
+    QPushButton *settingsButton;
     QTextEdit *resultText;
-    QLabel *titleLabel;
-    QLabel *instructionLabel;
 
     // Данные водителей
     QMap<int, QStringList> driverStreets;
     QMap<int, QString> driverNames;
+    QMap<QString, int> specificAddresses;
+    QMap<QString, QString> specificHours;
 
-    QMap<QString, int> specificAddresses;  // ключ - полный адрес, значение - ID водителя
-    QMap<QString, QString> specificHours;      // адрес -> время работы
-    // Окно парселбоксов
+    // Окна
     Parcelbox *parcelboxWindow;
+    StreetSettings *settingsWindow;
 };
 
 #endif // MAINWINDOW_H

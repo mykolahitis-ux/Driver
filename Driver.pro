@@ -9,11 +9,15 @@ SOURCES += \
     Parcelbox.cpp \
     main.cpp \
     mainwindow.cpp \
+    streetsettings.cpp
+
 
 
 HEADERS += \
     Parcelbox.h \
-    mainwindow.h
+    mainwindow.h \
+    streetsettings.h
+
 
 RESOURCES += \
     images.qrc
