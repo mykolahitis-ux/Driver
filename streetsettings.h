@@ -48,6 +48,8 @@ private:
     void setupUI();
     void initializeDefaultData();
     void loadTableData();
+    void loadSettingsFromJson();      // NEW: Load from JSON
+    void saveSettingsToJson();        // NEW: Save to JSON
     int extractHouseNumber(const QString &address);
 
     // UI элементы

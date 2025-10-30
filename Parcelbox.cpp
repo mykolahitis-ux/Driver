@@ -1,12 +1,16 @@
 #include "parcelbox.h"
 #include <QMessageBox>
 #include <QGroupBox>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 Parcelbox::Parcelbox(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUI();
-    initializeParcelboxData();
+    loadParcelboxDataFromJson();
     updateComboBoxItems();
     setWindowTitle("Parcelbox Information System");
     setFixedSize(600, 500);
@@ -25,7 +29,7 @@ Parcelbox::~Parcelbox()
 
 void Parcelbox::setupUI()
 {
-    centralWidget = new QWidget(this); // this указывает, что этот новый QWidget принадлежит текущему объекту (Parcelbox)
+    centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
 
     // Стили с синим цветом для Find Parcelbox
@@ -64,12 +68,6 @@ void Parcelbox::setupUI()
     titleLabel->setObjectName("title");
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setGeometry(30, 20, 540, 50);
-/*
-    // Инструкция
-    instructionLabel = new QLabel("Select parcelbox from list or search by address", centralWidget);
-    instructionLabel->setObjectName("instruction");
-    instructionLabel->setAlignment(Qt::AlignCenter);
-    instructionLabel->setGeometry(30, 65, 540, 25); */
 
     // ЛЕВАЯ СЕКЦИЯ - Комбо бокс
     comboLabel = new QLabel("Select Parcelbox:", centralWidget);
@@ -115,72 +113,54 @@ void Parcelbox::setupUI()
     resultText->setGeometry(30, 330, 540, 140);
 }
 
-void Parcelbox::initializeParcelboxData()
+void Parcelbox::loadParcelboxDataFromJson()
 {
-    // Инициализация данных парселбоксов
-    ParcelboxInfo box1;
-    box1.driverId = 53455;
-    box1.street = "Skupova";
-    box1.boxNumber = "PB001";
-    box1.workingHours = "08:00 - 22:00";
-    box1.driverName = "Tomasek";
-    parcelboxData["Skupova - PB001"] = box1;
+    QFile file("C:/Users/Босс/Desktop/хнуре/Driver/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/parcelbox_data.json");
 
-    ParcelboxInfo box2;
-    box2.driverId = 53455;
-    box2.street = "Tylova";
-    box2.boxNumber = "PB002";
-    box2.workingHours = "06:00 - 24:00";
-    box2.driverName = "Tomasek";
-    parcelboxData["Tylova - PB002"] = box2;
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, "Error",
+                              "Failed to open parcelbox_data.json\n"
+                              "Make sure the file exists in the application directory.");
+        return;
+    }
 
-    ParcelboxInfo box3;
-    box3.driverId = 33453;
-    box3.street = "Machova";
-    box3.boxNumber = "PB003";
-    box3.workingHours = "07:00 - 21:00";
-    box3.driverName = "Sheba";
-    parcelboxData["Machova - PB003"] = box3;
+    QByteArray jsonData = file.readAll();
+    file.close();
 
-    ParcelboxInfo box4;
-    box4.driverId = 33453;
-    box4.street = "Mirova";
-    box4.boxNumber = "PB004";
-    box4.workingHours = "08:00 - 20:00";
-    box4.driverName = "Sheba";
-    parcelboxData["Mirova - PB004"] = box4;
+    QJsonDocument doc = QJsonDocument::fromJson(jsonData);
 
-    ParcelboxInfo box5;
-    box5.driverId = 33047;
-    box5.street = "Brnenska";
-    box5.boxNumber = "PB005";
-    box5.workingHours = "09:00 - 19:00";
-    box5.driverName = "Bochi";
-    parcelboxData["Brnenska - PB005"] = box5;
+    if (doc.isNull() || !doc.isObject()) {
+        QMessageBox::critical(this, "Error",
+                              "Invalid JSON format in parcelbox_data.json");
+        return;
+    }
 
-    ParcelboxInfo box6;
-    box6.driverId = 33047;
-    box6.street = "Podnikatelska";
-    box6.boxNumber = "PB006";
-    box6.workingHours = "10:00 - 18:00";
-    box6.driverName = "Bochi";
-    parcelboxData["Podnikatelska - PB006"] = box6;
+    QJsonObject rootObj = doc.object();
 
-    ParcelboxInfo box7;
-    box7.driverId = 33051;
-    box7.street = "Hrbitovni";
-    box7.boxNumber = "PB007";
-    box7.workingHours = "08:00 - 20:00";
-    box7.driverName = "Debil";
-    parcelboxData["Hrbitovni - PB007"] = box7;
+    // Load parcelboxes
+    if (rootObj.contains("parcelboxes") && rootObj["parcelboxes"].isArray()) {
+        QJsonArray parcelboxArray = rootObj["parcelboxes"].toArray();
 
-    ParcelboxInfo box8;
-    box8.driverId = 33051;
-    box8.street = "Zabelska";
-    box8.boxNumber = "PB008";
-    box8.workingHours = "07:00 - 22:00";
-    box8.driverName = "Debil";
-    parcelboxData["Zabelska - PB008"] = box8;
+        for (const QJsonValue &boxValue : parcelboxArray) {
+            if (!boxValue.isObject()) continue;
+
+            QJsonObject boxObj = boxValue.toObject();
+
+            ParcelboxInfo info;
+            info.driverId = boxObj["driverId"].toInt();
+            info.street = boxObj["street"].toString();
+            info.boxNumber = boxObj["boxNumber"].toString();
+            info.workingHours = boxObj["workingHours"].toString();
+            info.driverName = boxObj["driverName"].toString();
+
+            // Создаем ключ в формате "Street - BoxNumber"
+            QString key = QString("%1 - %2").arg(info.street).arg(info.boxNumber);
+            parcelboxData[key] = info;
+        }
+    }
+
+    // Optional: Show success message or log
+    qDebug() << "Loaded" << parcelboxData.size() << "parcelboxes from JSON";
 }
 
 void Parcelbox::updateComboBoxItems()
@@ -219,7 +199,7 @@ void Parcelbox::searchByComboBox()
                              .arg(info.driverName);
 
         resultText->setText(result);
-        resultText->setStyleSheet(resultText->styleSheet() + " color: #ff9800;"); // оранжевый цвет
+        resultText->setStyleSheet(resultText->styleSheet() + " color: #ff9800;");
     }
 }
 
@@ -280,7 +260,7 @@ void Parcelbox::searchByAddress()
                           .arg(info.driverName);
         }
 
-        resultText->setStyleSheet(resultText->styleSheet() + " color: #2e7d32;"); // зеленый цвет
+        resultText->setStyleSheet(resultText->styleSheet() + " color: #2e7d32;");
     } else {
         result = QString(
                      "NO PARCELBOXES FOUND\n"

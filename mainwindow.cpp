@@ -5,12 +5,16 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QRegularExpression>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUI();
-    initializeDriverData();
+    loadDriverDataFromJson();  // Changed from initializeDriverData
     setWindowTitle("Driver Search by Address");
     setFixedSize(700, 650);
 
@@ -22,7 +26,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mapsButton, &QPushButton::clicked, this, &MainWindow::openMaps);
     connect(settingsButton, &QPushButton::clicked, this, &MainWindow::openSettingsWindow);
     connect(searchInMapsButton, &QPushButton::clicked, this, &MainWindow::searchAddressInMaps);
-
 
     parcelboxWindow = nullptr;
     settingsWindow = nullptr;
@@ -36,6 +39,78 @@ MainWindow::~MainWindow()
     if (settingsWindow) {
         delete settingsWindow;
     }
+}
+
+void MainWindow::loadDriverDataFromJson()
+{
+    QFile file("C:/Users/Босс/Desktop/хнуре/Driver/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/drivers_data.json");
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::critical(this, "Error",
+                              "Failed to open drivers_data.json\n"
+                              "Make sure the file exists in the application directory.");
+        return;
+    }
+
+    QByteArray jsonData = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(jsonData);
+
+    if (doc.isNull() || !doc.isObject()) {
+        QMessageBox::critical(this, "Error",
+                              "Invalid JSON format in drivers_data.json");
+        return;
+    }
+
+    QJsonObject rootObj = doc.object();
+
+    // Load drivers
+    if (rootObj.contains("drivers") && rootObj["drivers"].isArray()) {
+        QJsonArray driversArray = rootObj["drivers"].toArray();
+
+        for (const QJsonValue &driverValue : driversArray) {
+            if (!driverValue.isObject()) continue;
+
+            QJsonObject driverObj = driverValue.toObject();
+
+            int id = driverObj["id"].toInt();
+            QString name = driverObj["name"].toString();
+
+            QStringList streets;
+            if (driverObj.contains("streets") && driverObj["streets"].isArray()) {
+                QJsonArray streetsArray = driverObj["streets"].toArray();
+                for (const QJsonValue &streetValue : streetsArray) {
+                    streets << streetValue.toString();
+                }
+            }
+
+            driverStreets[id] = streets;
+            driverNames[id] = name;
+        }
+    }
+
+    // Load specific addresses
+    if (rootObj.contains("specificAddresses") && rootObj["specificAddresses"].isArray()) {
+        QJsonArray specificArray = rootObj["specificAddresses"].toArray();
+
+        for (const QJsonValue &addrValue : specificArray) {
+            if (!addrValue.isObject()) continue;
+
+            QJsonObject addrObj = addrValue.toObject();
+
+            QString address = addrObj["address"].toString();
+            int driverId = addrObj["driverId"].toInt();
+            QString hours = addrObj["hours"].toString();
+
+            specificAddresses[address] = driverId;
+            specificHours[address] = hours;
+        }
+    }
+
+    // Optional: Show success message or log
+    qDebug() << "Loaded" << driverStreets.size() << "drivers and"
+             << specificAddresses.size() << "specific addresses from JSON";
 }
 
 void MainWindow::openParcelboxWindow()
@@ -143,7 +218,6 @@ void MainWindow::setupUI()
     addressInput->setPlaceholderText("Example: Machova 15, Podnikatelska 103");
     addressInput->setGeometry(50, 130, 600, 50);
 
-
     searchButton = new QPushButton("Find Driver", centralWidget);
     searchButton->setObjectName("searchBtn");
     searchButton->setCursor(Qt::PointingHandCursor);
@@ -165,45 +239,41 @@ void MainWindow::setupUI()
     resultText->setPlaceholderText("Driver information will be displayed here...");
     resultText->setGeometry(50, 290, 600, 280);
 
-    // Кнопка Maps
-    mapsButton = new QPushButton("Maps", centralWidget);
-    mapsButton->setObjectName("mapsBtn");
-    mapsButton->setCursor(Qt::PointingHandCursor);
-    mapsButton->setGeometry(530, 20, 120, 60);
-
     // Кнопка Settings
     settingsButton = new QPushButton("⚙ Settings", centralWidget);
     settingsButton->setObjectName("settingsBtn");
     settingsButton->setCursor(Qt::PointingHandCursor);
     settingsButton->setGeometry(50, 580, 600, 50);
 
-    //  - Поиск в Maps
-    searchInMapsButton = new QPushButton("Search in Maps", centralWidget);
+
+    // Создаем контейнер-виджет для кнопок Maps
+    QWidget *mapsButtonsContainer = new QWidget(centralWidget);
+    mapsButtonsContainer->setGeometry(20, 20, 660, 70);
+
+    // Горизонтальный лайаут - выравнивает две кнопки Maps по горизонтали
+    // Одна кнопка прижимается к левому краю, вторая к правому
+    QHBoxLayout *mapsButtonsLayout = new QHBoxLayout(mapsButtonsContainer);
+    mapsButtonsLayout->setContentsMargins(0, 0, 0, 0);
+    mapsButtonsLayout->setSpacing(0);
+
+    // Кнопка "Search in Maps" слева
+    searchInMapsButton = new QPushButton("Search in Maps", mapsButtonsContainer);
     searchInMapsButton->setObjectName("searchMapsBtn");
     searchInMapsButton->setCursor(Qt::PointingHandCursor);
-    searchInMapsButton->setGeometry(20, 20, 140, 70);
-}
+    searchInMapsButton->setFixedSize(140, 70);
+    mapsButtonsLayout->addWidget(searchInMapsButton);
 
-void MainWindow::initializeDriverData()
-{
+    // Растягивающийся спейсер - отодвигает кнопки к противоположным краям
+    // Создает пространство между левой и правой кнопкой
+    mapsButtonsLayout->addStretch();
 
-    driverStreets[53455] = QStringList() << "emila skody" << "skupova" << "tylova";
-    driverNames[53455] = "Tomasek";
-
-    driverStreets[33453] = QStringList() << "machova" << "cermakova" << "politickych veznu" << "mirova";
-    driverNames[33453] = "Sheba";
-
-    driverStreets[33047] = QStringList() << "brnenska" << "podnikatelska" << "univerzitni";
-    driverNames[33047] = "Bochi";
-
-    driverStreets[33051] = QStringList() << "hrbitovni" << "zabelska" << "cvokarska";
-    driverNames[33051] = "Baha";
-
-    specificAddresses["hrbitovni 64"] = 33047;
-    specificHours["hrbitovni 64"] = "8:00 - 20:00";
-
-    specificAddresses["podnikatelska 1"] = 33047;
-    specificHours["podnikatelska 1"] = "10:00 - 13:00";
+    // Кнопка "Maps" справа
+    mapsButton = new QPushButton("Maps", mapsButtonsContainer);
+    mapsButton->setObjectName("mapsBtn");
+    mapsButton->setCursor(Qt::PointingHandCursor);
+    mapsButton->setFixedSize(120, 60);
+    // Выравнивание по вертикали - центрирует кнопку по высоте относительно левой кнопки
+    mapsButtonsLayout->addWidget(mapsButton, 0, Qt::AlignVCenter);
 }
 
 void MainWindow::openMaps()
@@ -232,9 +302,6 @@ void MainWindow::searchAddressInMaps()
 
     // Открываем в браузере
     QDesktopServices::openUrl(QUrl(mapsUrl));
-
-
-   // QMessageBox::information(this, "Поиск в Maps", QString("Открываю Google Maps для адреса:\n%1").arg(searchQuery));
 }
 
 void MainWindow::searchAddress()

@@ -37,7 +37,7 @@ private slots:
 
 private:
     void setupUI();
-    void initializeParcelboxData();
+    void loadParcelboxDataFromJson();  // Changed from initializeParcelboxData
     void updateComboBoxItems();
 
     // UI элементы
@@ -55,8 +55,8 @@ private:
     QLabel *addressLabel;
 
     // Данные парселбоксов
-    QMap<QString, ParcelboxInfo> parcelboxData; // ключ - полное название парселбокса
-    QStringList parcelboxList; // список всех парселбоксов для комбо бокса
+    QMap<QString, ParcelboxInfo> parcelboxData;
+    QStringList parcelboxList;
 };
 
 #endif // PARCELBOX_H

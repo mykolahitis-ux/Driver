@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QWidget>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTextEdit>
@@ -26,12 +25,14 @@ private slots:
     void clearResults();
     void openParcelboxWindow();
     void openMaps();
+    void searchAddressInMaps();
     void openSettingsWindow();
-    void searchAddressInMaps();  // НОВАЯ ФУНКЦИЯ
 
 private:
     void setupUI();
-    void initializeDriverData();
+    void loadDriverDataFromJson();
+    void saveDriverDataToJson();  // Новый метод для сохранения
+    QString getDataFilePath(const QString &fileName);  // Новый метод для путей
 
     // UI элементы
     QWidget *centralWidget;
@@ -41,8 +42,8 @@ private:
     QPushButton *clearButton;
     QPushButton *parcelboxButton;
     QPushButton *mapsButton;
-    QPushButton *searchInMapsButton;  // НОВАЯ КНОПКА
     QPushButton *settingsButton;
+    QPushButton *searchInMapsButton;
     QTextEdit *resultText;
 
     // Данные водителей
@@ -51,7 +52,7 @@ private:
     QMap<QString, int> specificAddresses;
     QMap<QString, QString> specificHours;
 
-    // Окна
+    // Дочерние окна
     Parcelbox *parcelboxWindow;
     StreetSettings *settingsWindow;
 };

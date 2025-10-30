@@ -24,3 +24,7 @@ RESOURCES += \
 
 FORMS += \
     parcelbox.ui
+
+DISTFILES += \
+    ../../../Desktop/drivers_data.json \
+    drivers_data.json

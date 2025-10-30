@@ -1,0 +1,36 @@
+{
+  "drivers": [
+    {
+      "id": 53455,
+      "name": "Tomasek",
+      "streets": ["emila skody", "skupova", "tylova"]
+    },
+    {
+      "id": 33453,
+      "name": "Sheba",
+      "streets": ["machova", "cermakova", "politickych veznu", "mirova"]
+    },
+    {
+      "id": 33047,
+      "name": "Bochi",
+      "streets": ["brnenska", "podnikatelska", "univerzitni"]
+    },
+    {
+      "id": 33051,
+      "name": "Baha",
+      "streets": ["hrbitovni", "zabelska", "cvokarska"]
+    }
+  ],
+  "specificAddresses": [
+    {
+      "address": "hrbitovni 64",
+      "driverId": 33047,
+      "hours": "8:00 - 20:00"
+    },
+    {
+      "address": "podnikatelska 1",
+      "driverId": 33047,
+      "hours": "10:00 - 13:00"
+    }
+  ]
+}
