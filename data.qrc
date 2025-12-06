@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/data">
+        <file>drivers_data.json</file>
+        <file>parcelbox_data1.json</file>
+        <file>street_settings.json</file>
+    </qresource>
+</RCC>

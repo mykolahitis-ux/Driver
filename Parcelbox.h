@@ -8,10 +8,6 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QMap>
-#include <QStringList>
-
-QT_BEGIN_NAMESPACE
-QT_END_NAMESPACE
 
 struct ParcelboxInfo {
     int driverId;
@@ -29,6 +25,9 @@ public:
     Parcelbox(QWidget *parent = nullptr);
     ~Parcelbox();
 
+    // Публичный метод для загрузки данных
+    void loadParcelboxDataFromJson();
+
 private slots:
     void searchByComboBox();
     void searchByAddress();
@@ -37,11 +36,13 @@ private slots:
 
 private:
     void setupUI();
-    void loadParcelboxDataFromJson();  // Changed from initializeParcelboxData
     void updateComboBoxItems();
 
     // UI элементы
     QWidget *centralWidget;
+    QLabel *titleLabel;
+    QLabel *comboLabel;
+    QLabel *addressLabel;
     QComboBox *parcelboxComboBox;
     QLineEdit *addressInput;
     QPushButton *searchComboButton;
@@ -49,12 +50,8 @@ private:
     QPushButton *clearButton;
     QPushButton *backButton;
     QTextEdit *resultText;
-    QLabel *titleLabel;
-    QLabel *instructionLabel;
-    QLabel *comboLabel;
-    QLabel *addressLabel;
 
-    // Данные парселбоксов
+    // Данные
     QMap<QString, ParcelboxInfo> parcelboxData;
     QStringList parcelboxList;
 };

@@ -9,12 +9,21 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QHBoxLayout>
+#include <QDir>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUI();
-    loadDriverDataFromJson();  // Changed from initializeDriverData
+
+    // Инициализируем окна до загрузки данных
+    parcelboxWindow = new Parcelbox(this);
+    settingsWindow = new StreetSettings(this);
+
+    // Загружаем все JSON файлы при запуске
+    loadAllJsonFiles();
+
     setWindowTitle("Driver Search by Address");
     setFixedSize(700, 650);
 
@@ -26,9 +35,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mapsButton, &QPushButton::clicked, this, &MainWindow::openMaps);
     connect(settingsButton, &QPushButton::clicked, this, &MainWindow::openSettingsWindow);
     connect(searchInMapsButton, &QPushButton::clicked, this, &MainWindow::searchAddressInMaps);
-
-    parcelboxWindow = nullptr;
-    settingsWindow = nullptr;
 }
 
 MainWindow::~MainWindow()
@@ -41,9 +47,35 @@ MainWindow::~MainWindow()
     }
 }
 
+void MainWindow::loadAllJsonFiles()
+{
+    qDebug() << "========================================";
+    qDebug() << "Starting JSON files initialization...";
+    qDebug() << "========================================";
+
+    // 1. Загружаем данные драйверов
+    loadDriverDataFromJson();
+
+    // 2. Загружаем данные parcelbox
+    if (parcelboxWindow) {
+        parcelboxWindow->loadParcelboxDataFromJson();
+    }
+
+    // 3. Загружаем настройки улиц
+    if (settingsWindow) {
+        settingsWindow->loadSettingsFromJson();
+    }
+
+    qDebug() << "========================================";
+    qDebug() << "All JSON files loaded successfully!";
+    qDebug() << "========================================";
+}
+
 void MainWindow::loadDriverDataFromJson()
 {
-    QFile file("C:/Users/Босс/Desktop/хнуре/Driver/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/drivers_data.json");
+    QString path = QDir::currentPath() + "/drivers_data.json";
+    QFile file(path);
+    qDebug() << "Loading from:" << path;
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QMessageBox::critical(this, "Error",
@@ -108,29 +140,26 @@ void MainWindow::loadDriverDataFromJson()
         }
     }
 
-    // Optional: Show success message or log
-    qDebug() << "Loaded" << driverStreets.size() << "drivers and"
-             << specificAddresses.size() << "specific addresses from JSON";
+    qDebug() << "[1/3] drivers_data.json: Loaded" << driverStreets.size() << "drivers and"
+             << specificAddresses.size() << "specific addresses";
 }
 
 void MainWindow::openParcelboxWindow()
 {
-    if (!parcelboxWindow) {
-        parcelboxWindow = new Parcelbox(this);
+    if (parcelboxWindow) {
+        parcelboxWindow->show();
+        parcelboxWindow->raise();
+        parcelboxWindow->activateWindow();
     }
-    parcelboxWindow->show();
-    parcelboxWindow->raise();
-    parcelboxWindow->activateWindow();
 }
 
 void MainWindow::openSettingsWindow()
 {
-    if (!settingsWindow) {
-        settingsWindow = new StreetSettings(this);
+    if (settingsWindow) {
+        settingsWindow->show();
+        settingsWindow->raise();
+        settingsWindow->activateWindow();
     }
-    settingsWindow->show();
-    settingsWindow->raise();
-    settingsWindow->activateWindow();
 }
 
 void MainWindow::setupUI()
@@ -243,36 +272,28 @@ void MainWindow::setupUI()
     settingsButton = new QPushButton("⚙ Settings", centralWidget);
     settingsButton->setObjectName("settingsBtn");
     settingsButton->setCursor(Qt::PointingHandCursor);
-    settingsButton->setGeometry(50, 580, 600, 50);
-
+    settingsButton->setGeometry(50, 580, 600, 60);
 
     // Создаем контейнер-виджет для кнопок Maps
     QWidget *mapsButtonsContainer = new QWidget(centralWidget);
     mapsButtonsContainer->setGeometry(20, 20, 660, 70);
 
-    // Горизонтальный лайаут - выравнивает две кнопки Maps по горизонтали
-    // Одна кнопка прижимается к левому краю, вторая к правому
     QHBoxLayout *mapsButtonsLayout = new QHBoxLayout(mapsButtonsContainer);
     mapsButtonsLayout->setContentsMargins(0, 0, 0, 0);
     mapsButtonsLayout->setSpacing(0);
 
-    // Кнопка "Search in Maps" слева
     searchInMapsButton = new QPushButton("Search in Maps", mapsButtonsContainer);
     searchInMapsButton->setObjectName("searchMapsBtn");
     searchInMapsButton->setCursor(Qt::PointingHandCursor);
     searchInMapsButton->setFixedSize(140, 70);
     mapsButtonsLayout->addWidget(searchInMapsButton);
 
-    // Растягивающийся спейсер - отодвигает кнопки к противоположным краям
-    // Создает пространство между левой и правой кнопкой
     mapsButtonsLayout->addStretch();
 
-    // Кнопка "Maps" справа
     mapsButton = new QPushButton("Maps", mapsButtonsContainer);
     mapsButton->setObjectName("mapsBtn");
     mapsButton->setCursor(Qt::PointingHandCursor);
-    mapsButton->setFixedSize(120, 60);
-    // Выравнивание по вертикали - центрирует кнопку по высоте относительно левой кнопки
+    mapsButton->setFixedSize(140, 70);
     mapsButtonsLayout->addWidget(mapsButton, 0, Qt::AlignVCenter);
 }
 
@@ -291,16 +312,10 @@ void MainWindow::searchAddressInMaps()
         return;
     }
 
-    // Автоматически добавляем "Харьков" к адресу
     QString searchQuery = address + ", Харьков";
-
-    // Кодируем адрес для URL (заменяем пробелы и спецсимволы)
     QString encodedAddress = QUrl::toPercentEncoding(searchQuery);
-
-    // Формируем URL для Google Maps
     QString mapsUrl = QString("https://www.google.com/maps/search/%1").arg(encodedAddress);
 
-    // Открываем в браузере
     QDesktopServices::openUrl(QUrl(mapsUrl));
 }
 

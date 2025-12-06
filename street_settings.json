@@ -1,0 +1,39 @@
+{
+    "houseRanges": [
+        {
+            "driverId": 33047,
+            "driverName": "Bochi",
+            "endNumber": 50,
+            "startNumber": 1,
+            "streetName": "Podnikatelska"
+        },
+        {
+            "driverId": 33047,
+            "driverName": "Bochi",
+            "endNumber": 30,
+            "startNumber": 1,
+            "streetName": "Brnenska"
+        },
+        {
+            "driverId": 33453,
+            "driverName": "Sheba",
+            "endNumber": 20,
+            "startNumber": 1,
+            "streetName": "Machova"
+        },
+        {
+            "driverId": 53455,
+            "driverName": "Tomasek",
+            "endNumber": 50,
+            "startNumber": 1,
+            "streetName": "Skupova"
+        },
+        {
+            "driverId": 33453,
+            "driverName": "Sheba",
+            "endNumber": 100,
+            "startNumber": 1,
+            "streetName": "Brozikova"
+        }
+    ]
+}

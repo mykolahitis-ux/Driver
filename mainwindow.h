@@ -25,14 +25,13 @@ private slots:
     void clearResults();
     void openParcelboxWindow();
     void openMaps();
-    void searchAddressInMaps();
     void openSettingsWindow();
+    void searchAddressInMaps();
 
 private:
     void setupUI();
     void loadDriverDataFromJson();
-    void saveDriverDataToJson();  // Новый метод для сохранения
-    QString getDataFilePath(const QString &fileName);  // Новый метод для путей
+    void loadAllJsonFiles();  // Новый метод для загрузки всех JSON файлов
 
     // UI элементы
     QWidget *centralWidget;
@@ -46,13 +45,13 @@ private:
     QPushButton *searchInMapsButton;
     QTextEdit *resultText;
 
-    // Данные водителей
+    // Данные драйверов
     QMap<int, QStringList> driverStreets;
     QMap<int, QString> driverNames;
     QMap<QString, int> specificAddresses;
     QMap<QString, QString> specificHours;
 
-    // Дочерние окна
+    // Окна
     Parcelbox *parcelboxWindow;
     StreetSettings *settingsWindow;
 };

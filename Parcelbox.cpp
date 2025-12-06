@@ -5,13 +5,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QDir>
 
 Parcelbox::Parcelbox(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUI();
-    loadParcelboxDataFromJson();
-    updateComboBoxItems();
     setWindowTitle("Parcelbox Information System");
     setFixedSize(600, 500);
 
@@ -32,7 +31,6 @@ void Parcelbox::setupUI()
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
 
-    // Стили с синим цветом для Find Parcelbox
     setStyleSheet(
         "QMainWindow { background-color: #f5f5f5; }"
         "QLineEdit, QComboBox { "
@@ -63,13 +61,11 @@ void Parcelbox::setupUI()
         "QPushButton#backBtn:hover { background-color: #757575; }"
         );
 
-    // Заголовок
     titleLabel = new QLabel("Parcelbox Information System", centralWidget);
     titleLabel->setObjectName("title");
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setGeometry(30, 20, 540, 50);
 
-    // ЛЕВАЯ СЕКЦИЯ - Комбо бокс
     comboLabel = new QLabel("Select Parcelbox:", centralWidget);
     comboLabel->setGeometry(30, 105, 250, 25);
 
@@ -82,7 +78,6 @@ void Parcelbox::setupUI()
     searchComboButton->setCursor(Qt::PointingHandCursor);
     searchComboButton->setGeometry(30, 185, 250, 60);
 
-    // ПРАВАЯ СЕКЦИЯ - Поиск по адресу
     addressLabel = new QLabel("Enter street name:", centralWidget);
     addressLabel->setGeometry(320, 105, 250, 25);
 
@@ -95,7 +90,6 @@ void Parcelbox::setupUI()
     searchAddressButton->setCursor(Qt::PointingHandCursor);
     searchAddressButton->setGeometry(320, 185, 250, 60);
 
-    // Кнопки управления
     clearButton = new QPushButton("Clear", centralWidget);
     clearButton->setObjectName("clearBtn");
     clearButton->setCursor(Qt::PointingHandCursor);
@@ -106,7 +100,6 @@ void Parcelbox::setupUI()
     backButton->setCursor(Qt::PointingHandCursor);
     backButton->setGeometry(320, 265, 250, 60);
 
-    // Поле результатов
     resultText = new QTextEdit(centralWidget);
     resultText->setReadOnly(true);
     resultText->setPlaceholderText("Parcelbox information will be displayed here...");
@@ -115,7 +108,8 @@ void Parcelbox::setupUI()
 
 void Parcelbox::loadParcelboxDataFromJson()
 {
-    QFile file("C:/Users/Босс/Desktop/хнуре/Driver/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/parcelbox_data.json");
+    QString path = QDir::currentPath() + "/parcelbox_data.json";
+    QFile file(path);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QMessageBox::critical(this, "Error",
@@ -153,18 +147,20 @@ void Parcelbox::loadParcelboxDataFromJson()
             info.workingHours = boxObj["workingHours"].toString();
             info.driverName = boxObj["driverName"].toString();
 
-            // Создаем ключ в формате "Street - BoxNumber"
             QString key = QString("%1 - %2").arg(info.street).arg(info.boxNumber);
             parcelboxData[key] = info;
         }
     }
 
-    // Optional: Show success message or log
-    qDebug() << "Loaded" << parcelboxData.size() << "parcelboxes from JSON";
+    // Обновляем ComboBox после загрузки
+    updateComboBoxItems();
+
+    qDebug() << "[2/3] parcelbox_data.json: Loaded" << parcelboxData.size() << "parcelboxes";
 }
 
 void Parcelbox::updateComboBoxItems()
 {
+    parcelboxComboBox->clear();
     parcelboxList = parcelboxData.keys();
     parcelboxList.sort();
     parcelboxComboBox->addItems(parcelboxList);
@@ -212,10 +208,8 @@ void Parcelbox::searchByAddress()
         return;
     }
 
-    // Приведение к нижнему регистру для поиска
     QString searchAddress = address.toLower();
 
-    // Убираем все символы кроме букв, цифр и пробелов
     QString cleanAddress;
     for (QChar c : searchAddress) {
         if (c.isLetterOrNumber() || c.isSpace()) {
@@ -224,7 +218,6 @@ void Parcelbox::searchByAddress()
     }
     cleanAddress = cleanAddress.simplified();
 
-    // Поиск парселбокса
     QStringList foundParcelboxes;
 
     for (auto it = parcelboxData.begin(); it != parcelboxData.end(); ++it) {
@@ -232,7 +225,6 @@ void Parcelbox::searchByAddress()
         ParcelboxInfo info = it.value();
         QString streetName = info.street.toLower();
 
-        // Ищем частичные совпадения
         if (cleanAddress.contains(streetName) || streetName.contains(cleanAddress)) {
             foundParcelboxes.append(parcelboxName);
         }

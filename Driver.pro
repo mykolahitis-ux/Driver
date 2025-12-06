@@ -20,6 +20,7 @@ HEADERS += \
 
 
 RESOURCES += \
+    data.qrc \
     images.qrc
 
 FORMS += \

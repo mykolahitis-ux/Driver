@@ -7,13 +7,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QDir>
 
 StreetSettings::StreetSettings(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUI();
-    loadSettingsFromJson();
-    loadTableData();
     setWindowTitle("Street Number Range Settings");
     setFixedSize(900, 700);
 
@@ -33,10 +32,7 @@ void StreetSettings::setupUI()
     setCentralWidget(centralWidget);
 
     setStyleSheet(
-        // === Общие настройки ===
         "QMainWindow { background-color: #f5f5f5; }"
-
-        // === Поля ввода ===
         "QLineEdit { "
         "padding: 8px; "
         "border: 2px solid #ddd; "
@@ -46,8 +42,6 @@ void StreetSettings::setupUI()
         "color: #000000; "
         "}"
         "QLineEdit:focus { border-color: #004b93; background-color: #fffaf0; }"
-
-        // === Кнопки ===
         "QPushButton { "
         "padding: 10px 15px; "
         "border: none; "
@@ -65,8 +59,6 @@ void StreetSettings::setupUI()
         "QPushButton#saveBtn:hover { background-color: #0b7dda; }"
         "QPushButton#backBtn { background-color: #9e9e9e; }"
         "QPushButton#backBtn:hover { background-color: #757575; }"
-
-        // === Таблица ===
         "QTableWidget { "
         "border: 2px solid #ddd; "
         "border-radius: 8px; "
@@ -81,8 +73,6 @@ void StreetSettings::setupUI()
         "background-color: #004b93; "
         "color: white; "
         "}"
-
-        // === Заголовки таблицы ===
         "QHeaderView::section { "
         "background-color: #004b93; "
         "color: white; "
@@ -90,8 +80,6 @@ void StreetSettings::setupUI()
         "border: none; "
         "font-weight: bold; "
         "}"
-
-        // === Метки ===
         "QLabel#title { "
         "font-size: 20px; "
         "font-weight: bold; "
@@ -102,8 +90,6 @@ void StreetSettings::setupUI()
         "color: #444; "
         "font-weight: bold; "
         "}"
-
-        // === Группы ===
         "QGroupBox { "
         "border: 2px solid #ddd; "
         "border-radius: 8px; "
@@ -120,14 +106,11 @@ void StreetSettings::setupUI()
         "}"
         );
 
-
-    // Заголовок
     titleLabel = new QLabel("Street House Number Range Settings", centralWidget);
     titleLabel->setObjectName("title");
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setGeometry(50, 20, 800, 40);
 
-    // Группа для добавления нового правила
     QGroupBox *addGroupBox = new QGroupBox("Add New Rule", centralWidget);
     addGroupBox->setGeometry(50, 70, 800, 140);
 
@@ -166,7 +149,6 @@ void StreetSettings::setupUI()
     addButton->setCursor(Qt::PointingHandCursor);
     addButton->setGeometry(250, 90, 300, 50);
 
-    // Таблица с правилами
     rulesTable = new QTableWidget(centralWidget);
     rulesTable->setGeometry(50, 230, 800, 350);
     rulesTable->setColumnCount(5);
@@ -176,7 +158,6 @@ void StreetSettings::setupUI()
     rulesTable->setSelectionMode(QAbstractItemView::SingleSelection);
     rulesTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    // Кнопки управления
     deleteButton = new QPushButton("Delete Selected", centralWidget);
     deleteButton->setObjectName("deleteBtn");
     deleteButton->setCursor(Qt::PointingHandCursor);
@@ -195,12 +176,14 @@ void StreetSettings::setupUI()
 
 void StreetSettings::loadSettingsFromJson()
 {
-    QFile file("street_settings.json");
+    QString path = QDir::currentPath() + "/street_settings.json";
+    QFile file(path);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        // Если файл не существует, создаем его с примером данных
         initializeDefaultData();
         saveSettingsToJson();
+        qDebug() << "[3/3] street_settings.json: Created with default data";
+        loadTableData();
         return;
     }
 
@@ -218,10 +201,8 @@ void StreetSettings::loadSettingsFromJson()
 
     QJsonObject rootObj = doc.object();
 
-    // Очищаем текущие данные
     houseRanges.clear();
 
-    // Загружаем правила
     if (rootObj.contains("houseRanges") && rootObj["houseRanges"].isArray()) {
         QJsonArray rangesArray = rootObj["houseRanges"].toArray();
 
@@ -241,7 +222,8 @@ void StreetSettings::loadSettingsFromJson()
         }
     }
 
-    qDebug() << "Loaded" << houseRanges.size() << "house range rules from JSON";
+    qDebug() << "[3/3] street_settings.json: Loaded" << houseRanges.size() << "house range rules";
+    loadTableData();
 }
 
 void StreetSettings::saveSettingsToJson()
@@ -249,7 +231,6 @@ void StreetSettings::saveSettingsToJson()
     QJsonObject rootObj;
     QJsonArray rangesArray;
 
-    // Сохраняем все правила
     for (const HouseRange &range : houseRanges) {
         QJsonObject rangeObj;
         rangeObj["streetName"] = range.streetName;
@@ -263,9 +244,9 @@ void StreetSettings::saveSettingsToJson()
 
     rootObj["houseRanges"] = rangesArray;
 
-    // Записываем в файл
     QJsonDocument doc(rootObj);
-    QFile file("street_settings.json");
+    QString path = QDir::currentPath() + "/street_settings.json";
+    QFile file(path);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::critical(this, "Error",
@@ -281,7 +262,6 @@ void StreetSettings::saveSettingsToJson()
 
 void StreetSettings::initializeDefaultData()
 {
-    // Примеры начальных данных
     HouseRange range1;
     range1.streetName = "Podnikatelska";
     range1.startNumber = 1;
@@ -323,7 +303,6 @@ void StreetSettings::addNewRule()
         return;
     }
 
-    // Конвертация строк в числа
     bool ok1, ok2, ok3;
     int startNum = startStr.toInt(&ok1);
     int endNum = endStr.toInt(&ok2);
@@ -349,10 +328,8 @@ void StreetSettings::addNewRule()
     houseRanges.append(newRange);
     loadTableData();
 
-    // Автоматически сохраняем в JSON
     saveSettingsToJson();
 
-    // Очистка полей
     streetInput->clear();
     startNumberInput->clear();
     endNumberInput->clear();
@@ -380,7 +357,6 @@ void StreetSettings::deleteSelectedRule()
         houseRanges.removeAt(currentRow);
         loadTableData();
 
-        // Автоматически сохраняем в JSON
         saveSettingsToJson();
 
         QMessageBox::information(this, "Success", "Rule deleted and saved successfully!");
@@ -415,7 +391,6 @@ int StreetSettings::findDriverByAddress(const QString &address, QString &driverN
 {
     QString cleanAddress = address.toLower().simplified();
 
-    // Извлекаем номер дома
     int houseNumber = extractHouseNumber(cleanAddress);
 
     if (houseNumber == -1) {
@@ -423,7 +398,6 @@ int StreetSettings::findDriverByAddress(const QString &address, QString &driverN
         return -1;
     }
 
-    // Ищем подходящее правило
     for (const HouseRange &range : houseRanges) {
         QString streetLower = range.streetName.toLower();
 

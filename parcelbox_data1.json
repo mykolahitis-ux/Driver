@@ -1,0 +1,60 @@
+{
+  "parcelboxes": [
+    {
+      "driverId": 53455,
+      "street": "Skupova",
+      "boxNumber": "PB001",
+      "workingHours": "08:00 - 22:00",
+      "driverName": "Tomasek"
+    },
+    {
+      "driverId": 53455,
+      "street": "Tylova",
+      "boxNumber": "PB002",
+      "workingHours": "06:00 - 24:00",
+      "driverName": "Tomasek"
+    },
+    {
+      "driverId": 33453,
+      "street": "Machova",
+      "boxNumber": "PB003",
+      "workingHours": "07:00 - 21:00",
+      "driverName": "Sheba"
+    },
+    {
+      "driverId": 33453,
+      "street": "Mirova",
+      "boxNumber": "PB004",
+      "workingHours": "08:00 - 20:00",
+      "driverName": "Sheba"
+    },
+    {
+      "driverId": 33047,
+      "street": "Brnenska",
+      "boxNumber": "PB005",
+      "workingHours": "09:00 - 19:00",
+      "driverName": "Bochi"
+    },
+    {
+      "driverId": 33047,
+      "street": "Podnikatelska",
+      "boxNumber": "PB006",
+      "workingHours": "10:00 - 18:00",
+      "driverName": "Bochi"
+    },
+    {
+      "driverId": 33051,
+      "street": "Hrbitovni",
+      "boxNumber": "PB007",
+      "workingHours": "08:00 - 20:00",
+      "driverName": "Debil"
+    },
+    {
+      "driverId": 33051,
+      "street": "Zabelska",
+      "boxNumber": "PB008",
+      "workingHours": "07:00 - 22:00",
+      "driverName": "Debil"
+    }
+  ]
+}
